@@ -132,6 +132,8 @@ export default function Contact() {
     setToast({ isVisible: true, message, type })
   }
 
+  const isDesktop = useIsDesktop()
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -214,10 +216,11 @@ export default function Contact() {
     return text.split('').map((char, i) => (
       <span
         key={i}
-        onMouseEnter={handleCharHover}
-        onMouseLeave={handleCharLeave}
-        className={`inline-block transition-colors duration-300 ${customClass}`}
+        onMouseEnter={isDesktop ? handleCharHover : null}
+        onMouseLeave={isDesktop ? handleCharLeave : null}
+        className={`inline-block transition-colors duration-300 ${isDesktop ? 'cursor-none' : ''} ${customClass}`}
         style={{ willChange: 'transform, color' }}
+        data-cursor={isDesktop ? "pointer" : undefined}
       >
         {char === ' ' ? '\u00A0' : char}
       </span>
@@ -249,9 +252,10 @@ export default function Contact() {
                   <div className="mask-content flex flex-wrap">
                     {renderChars("HELLO", "text-blue-500")}
                     <span
-                      onMouseEnter={handleCharHover}
-                      onMouseLeave={handleCharLeave}
-                      className="inline-block transition-colors duration-300 text-white"
+                      onMouseEnter={isDesktop ? handleCharHover : null}
+                      onMouseLeave={isDesktop ? handleCharLeave : null}
+                      className={`inline-block transition-colors duration-300 text-white ${isDesktop ? 'cursor-none' : ''}`}
+                      data-cursor={isDesktop ? "pointer" : undefined}
                     >.</span>
                   </div>
                 </div>
@@ -307,7 +311,7 @@ export default function Contact() {
                 required
               />
 
-              <div className="mt-10 flex flex-col gap-4 lg:gap-0 lg:flex-row lg:items-center lg:justify-start">
+              <div className="mt-10 flex flex-col items-center lg:items-start gap-4 lg:gap-0 lg:flex-row lg:justify-start lg:items-center">
                 <Magnetic strength={0.3}>
                   <button
                     type="submit"

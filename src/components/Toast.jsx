@@ -26,28 +26,28 @@ const Toast = ({ message, type = 'success', isVisible, onClose }) => {
             opacity: { duration: 0.4 },
             filter: { duration: 0.4 }
           }}
-          className="fixed bottom-8 right-1/2 translate-x-1/2 lg:right-10 lg:translate-x-0 z-[10002] flex items-center gap-4 px-6 py-4 bg-[#0B0B0B]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl min-w-[320px] max-w-[90vw]"
+          className="fixed bottom-6 md:bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 lg:left-auto lg:right-10 lg:translate-x-0 z-[10002] flex items-center gap-3 md:gap-4 px-4 py-3 md:px-6 md:py-4 bg-[#0B0B0B]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl md:w-auto md:min-w-[350px] max-w-none md:max-w-md lg:max-w-none"
         >
           {/* Accent Line */}
           <div className={`absolute top-0 left-0 w-full h-[2px] rounded-t-2xl ${type === 'success' ? 'bg-blue-500' : 'bg-rose-500'}`} />
 
           <div className="flex-shrink-0">
             {type === 'success' ? (
-              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                <FiCheckCircle size={22} />
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <FiCheckCircle className="text-lg md:text-xl" />
               </div>
             ) : (
-              <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
-                <FiAlertCircle size={22} />
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
+                <FiAlertCircle className="text-lg md:text-xl" />
               </div>
             )}
           </div>
 
           <div className="flex-1">
-            <p className="text-white text-sm font-medium leading-tight">
+            <p className="text-white text-xs md:text-sm font-medium leading-tight">
               {message}
             </p>
-            <p className="text-white/40 text-[0.65rem] uppercase tracking-widest mt-1 font-mono">
+            <p className="text-white/40 text-[0.6rem] md:text-[0.65rem] uppercase tracking-widest mt-1 font-mono">
               {type === 'success' ? 'Confirmation' : 'System Alert'}
             </p>
           </div>

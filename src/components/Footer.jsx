@@ -52,10 +52,11 @@ export default function Footer() {
     return text.split('').map((char, i) => (
       <span
         key={i}
-        onMouseEnter={handleCharHover}
-        onMouseLeave={handleCharLeave}
-        className={`inline-block transition-colors duration-300 ${customClass}`}
+        onMouseEnter={isDesktop ? handleCharHover : null}
+        onMouseLeave={isDesktop ? handleCharLeave : null}
+        className={`inline-block transition-colors duration-300 ${isDesktop ? 'cursor-none' : ''} ${customClass}`}
         style={{ willChange: 'transform, color' }}
+        data-cursor={isDesktop ? "pointer" : undefined}
       >
         {char === ' ' ? '\u00A0' : char}
       </span>

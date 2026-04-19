@@ -73,10 +73,12 @@ export default function Home() {
         })
     }
 
-    allChars.forEach(char => {
-        char.addEventListener('mouseenter', onMouseEnter)
-        char.addEventListener('mouseleave', onMouseLeave)
-    })
+    if (isDesktop) {
+        allChars.forEach(char => {
+            char.addEventListener('mouseenter', onMouseEnter)
+            char.addEventListener('mouseleave', onMouseLeave)
+        })
+    }
 
     // Parallax effect on scroll
     gsap.to(parallaxRef.current, {
@@ -114,9 +116,9 @@ export default function Home() {
     return text.split('').map((char, i) => (
       <span 
         key={i} 
-        className="char inline-block cursor-none" 
+        className={`char inline-block ${isDesktop ? 'cursor-none' : ''}`} 
         style={{ willChange: 'transform, color' }}
-        data-cursor="pointer"
+        data-cursor={isDesktop ? "pointer" : undefined}
       >
         {char === ' ' ? '\u00A0' : char}
       </span>

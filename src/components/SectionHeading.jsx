@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useIsDesktop } from '../hooks/useMediaQuery'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -10,6 +11,7 @@ export default function SectionHeading({ label, title, subtitle }) {
   const titleRef = useRef(null)
   const lineRef = useRef(null)
   const labelRef = useRef(null)
+  const isDesktop = useIsDesktop()
 
   useEffect(() => {
     const chars = titleRef.current.querySelectorAll('.char')
@@ -57,10 +59,12 @@ export default function SectionHeading({ label, title, subtitle }) {
       })
     }
 
-    chars.forEach(char => {
-      char.addEventListener('mouseenter', handleMouseEnter)
-      char.addEventListener('mouseleave', handleMouseLeave)
-    })
+    if (isDesktop) {
+      chars.forEach(char => {
+        char.addEventListener('mouseenter', handleMouseEnter)
+        char.addEventListener('mouseleave', handleMouseLeave)
+      })
+    }
 
     return () => {
       chars.forEach(char => {
@@ -75,9 +79,9 @@ export default function SectionHeading({ label, title, subtitle }) {
     return text.split('').map((char, index) => (
       <span 
         key={index} 
-        className="char inline-block cursor-none" 
+        className={`char inline-block ${isDesktop ? 'cursor-none' : ''}`} 
         style={{ willChange: 'transform, color' }}
-        data-cursor="pointer"
+        data-cursor={isDesktop ? "pointer" : undefined}
       >
         {char === ' ' ? '\u00A0' : char}
       </span>
