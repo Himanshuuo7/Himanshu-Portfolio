@@ -18,16 +18,22 @@ export default function Home() {
   const isDesktop = useIsDesktop()
 
   useEffect(() => {
-    const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
+    const chars1 = title1Ref.current.querySelectorAll('.char')
+    const chars2 = title2Ref.current.querySelectorAll('.char')
+    
+    // Total reset for entry
+    gsap.set([chars1, chars2, subtitleRef.current, ctaRef.current, scrollRef.current], { opacity: 0 })
+
+    const tl = gsap.timeline({ defaults: { ease: 'power4.out' } })
 
     // Entry animation sequence
-    tl.fromTo(title1Ref.current, 
-      { y: 100, opacity: 0 }, 
-      { y: 0, opacity: 1, duration: 1.5, delay: 0.5 }
+    tl.fromTo(chars1, 
+      { y: '100%', rotate: 5, opacity: 0 }, 
+      { y: '0%', rotate: 0, opacity: 1, duration: 1.5, stagger: 0.05, delay: 0.5 }
     )
-    .fromTo(title2Ref.current, 
-      { y: 100, opacity: 0 }, 
-      { y: 0, opacity: 1, duration: 1.5 }, 
+    .fromTo(chars2, 
+      { y: '100%', rotate: 5, opacity: 0 }, 
+      { y: '0%', rotate: 0, opacity: 1, duration: 1.5, stagger: 0.05 }, 
       '-=1.2'
     )
     .fromTo(subtitleRef.current, 
@@ -46,6 +52,32 @@ export default function Home() {
       '-=0.5'
     )
 
+    // Character Hover Effect Logic
+    const allChars = [...chars1, ...chars2]
+    
+    const onMouseEnter = (e) => {
+        gsap.to(e.target, { 
+            color: '#0066FF', 
+            y: -15, 
+            duration: 0.4, 
+            ease: 'power3.out' 
+        })
+    }
+    
+    const onMouseLeave = (e) => {
+        gsap.to(e.target, { 
+            color: '#FFFFFF', 
+            y: 0, 
+            duration: 0.6, 
+            ease: 'power3.inOut' 
+        })
+    }
+
+    allChars.forEach(char => {
+        char.addEventListener('mouseenter', onMouseEnter)
+        char.addEventListener('mouseleave', onMouseLeave)
+    })
+
     // Parallax effect on scroll
     gsap.to(parallaxRef.current, {
       y: 200,
@@ -60,6 +92,10 @@ export default function Home() {
 
     return () => {
       tl.kill()
+      allChars.forEach(char => {
+        char.removeEventListener('mouseenter', onMouseEnter)
+        char.removeEventListener('mouseleave', onMouseLeave)
+      })
       ScrollTrigger.getAll().forEach(t => t.kill())
     }
   }, [])
@@ -72,6 +108,19 @@ export default function Home() {
             behavior: 'smooth'
         })
     }
+  }
+
+  const renderChars = (text) => {
+    return text.split('').map((char, i) => (
+      <span 
+        key={i} 
+        className="char inline-block cursor-none" 
+        style={{ willChange: 'transform, color' }}
+        data-cursor="pointer"
+      >
+        {char === ' ' ? '\u00A0' : char}
+      </span>
+    ))
   }
 
   return (
@@ -132,7 +181,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Heading */}
+          {/* Heading with Masking & Interaction */}
           <div style={{ overflow: 'hidden' }}>
             <h1
               ref={title1Ref}
@@ -141,13 +190,16 @@ export default function Home() {
                 fontSize: 'clamp(4rem, 12vw, 10rem)',
                 color: '#FFFFFF',
                 lineHeight: 0.9,
-                letterSpacing: '-0.02em'
+                letterSpacing: '-0.02em',
+                display: 'flex',
+                flexWrap: 'wrap'
               }}
             >
-              BUILDING<span style={{ color: '#0066FF' }}>.</span>
+              {renderChars("BUILDING")}
+              <span className="text-blue-500 inline-block">.</span>
             </h1>
           </div>
-          <div style={{ overflow: 'hidden', marginBottom: '2rem' }}>
+          <div style={{ overflow: 'hidden', marginBottom: '2.5rem' }}>
             <h1
               ref={title2Ref}
               style={{
@@ -155,10 +207,12 @@ export default function Home() {
                 fontSize: 'clamp(4rem, 12vw, 10rem)',
                 color: '#FFFFFF',
                 lineHeight: 0.9,
-                letterSpacing: '-0.02em'
+                letterSpacing: '-0.02em',
+                display: 'flex',
+                flexWrap: 'wrap'
               }}
             >
-              BOLD PRODUCTS
+              {renderChars("BOLD PRODUCTS")}
             </h1>
           </div>
 

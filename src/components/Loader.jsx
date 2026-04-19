@@ -1,12 +1,14 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
+
+const IDENTITY_WORDS = ["DESIGN", "CODE", "ENGINEER", "HIMANSHU."]
 
 export default function Loader({ onComplete }) {
   const containerRef = useRef(null)
-  const progressRef = useRef(null)
-  const percentageRef = useRef(null)
+  const contentRef = useRef(null)
   const nameRef = useRef(null)
-  const tagRef = useRef(null)
+  const [currentWord, setCurrentWord] = useState(IDENTITY_WORDS[0])
+  const [count, setCount] = useState(0)
 
   useEffect(() => {
     const tl = gsap.timeline({
@@ -15,114 +17,151 @@ export default function Loader({ onComplete }) {
       }
     })
 
-    // Initialization
-    gsap.set([nameRef.current, tagRef.current, percentageRef.current], { opacity: 0, y: 20 })
-    gsap.set(progressRef.current, { scaleX: 0 })
-
-    tl.to([nameRef.current, percentageRef.current], {
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      ease: 'power3.out',
-      delay: 0.2
+    // 1. Word Cycle Phase
+    const wordCycleTl = gsap.timeline()
+    
+    IDENTITY_WORDS.slice(0, 3).forEach((word) => {
+        wordCycleTl.to({}, { 
+            duration: 0.3, 
+            onStart: () => setCurrentWord(word) 
+        })
+        .fromTo(nameRef.current, 
+            { y: 30, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' }
+        )
+        .to(nameRef.current, { 
+            y: -30, opacity: 0, duration: 0.2, ease: 'power3.in', delay: 0.1 
+        })
     })
-    .to(tagRef.current, {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      ease: 'power3.out'
-    }, '-=0.4')
-    .to(progressRef.current, {
-      scaleX: 1,
-      duration: 2.5,
-      ease: 'power2.inOut',
+
+    // 2. Final Signature Reveal + Kinetic Counter
+    const subtitleWords = containerRef.current.querySelectorAll('.subtitle-word')
+    gsap.set(subtitleWords, { y: 20, opacity: 0 })
+
+    tl.add(wordCycleTl)
+    .to({}, { 
+        duration: 0.1, 
+        onStart: () => setCurrentWord(IDENTITY_WORDS[3]) 
+    })
+    .fromTo(nameRef.current, 
+        { y: 50, opacity: 0, letterSpacing: '0.2em' }, 
+        { y: 0, opacity: 1, letterSpacing: '0.05em', duration: 1.2, ease: 'expo.out' }
+    )
+    .to(subtitleWords, {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: 'power3.out'
     }, '-=0.6')
     .to({}, {
-      duration: 2.2,
+      duration: 2.5,
       onUpdate: function() {
-        const progress = Math.round(this.progress() * 100)
-        if (percentageRef.current) percentageRef.current.innerText = `${progress}%`
+        const p = this.progress()
+        const easedP = gsap.parseEase('power2.inOut')(p)
+        setCount(Math.round(easedP * 100))
       }
-    }, '-=2.5')
+    }, '-=1.2')
+
+    // 3. Pro-Level Exit (No more curves, just premium slide)
+    tl.to(nameRef.current, {
+        textShadow: '0 0 30px rgba(255,255,255,0.5)',
+        duration: 0.8,
+        ease: 'power2.inOut'
+    }, '-=0.5')
     .to(containerRef.current, {
       y: '-100%',
-      duration: 1,
+      duration: 1.2,
       ease: 'expo.inOut',
-      delay: 0.2
+      delay: 0.1
     })
 
-    return () => tl.kill()
+    const handleMouseMove = (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 30
+        const y = (e.clientY / window.innerHeight - 0.5) * 30
+        // Clean Magnetic Drift - No Tilt
+        gsap.to(contentRef.current, { x, y, duration: 1, ease: 'power2.out' })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => {
+        tl.kill()
+        window.removeEventListener('mousemove', handleMouseMove)
+    }
   }, [onComplete])
 
   return (
-    <div ref={containerRef} className="loader-overlay" style={{ background: '#0B0B0B' }}>
-      {/* Progress line */}
-      <div 
-        ref={progressRef}
-        style={{
-          position: 'absolute', top: 0, left: 0,
-          width: '100%', height: '2px',
-          background: '#0066FF',
-          transformOrigin: 'left',
-          boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)',
-          zIndex: 10
+    <div 
+        ref={containerRef} 
+        style={{ 
+            position: 'fixed', inset: 0, zIndex: 1000, 
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#000000', overflow: 'hidden'
         }}
-      />
+    >
+      <div ref={contentRef} style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
+        <div style={{ position: 'absolute', inset: -500, background: 'url(https://grainy-gradients.vercel.app/noise.svg)', opacity: 0.05, pointerEvents: 'none', zIndex: -1 }} />
 
-      <div style={{ textAlign: 'center' }}>
-        <h1 
-          ref={nameRef}
-          style={{
-            fontFamily: '"Bebas Neue", sans-serif',
-            fontSize: 'clamp(4rem, 15vw, 10rem)',
-            color: '#FFFFFF',
-            letterSpacing: '0.05em',
-            lineHeight: 1,
-            margin: 0
-          }}
-        >
-          HIMANSHU<span style={{ color: '#0066FF' }}>.</span>
-        </h1>
+        <div style={{ overflow: 'hidden' }}>
+          <h1 
+            ref={nameRef}
+            style={{
+              fontFamily: '"Bebas Neue", sans-serif',
+              fontSize: 'clamp(4rem, 15vw, 10rem)',
+              color: '#FFFFFF',
+              lineHeight: 1,
+              margin: 0,
+              willChange: 'transform, opacity, letter-spacing, text-shadow'
+            }}
+          >
+            {currentWord === "HIMANSHU." ? (
+                <>HIMANSHU<span style={{ color: '#0066FF' }}>.</span></>
+            ) : currentWord}
+          </h1>
+        </div>
+        
         <p 
-          ref={tagRef}
-          style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: 'max(0.7rem, 1vw)',
-            color: '#0066FF',
-            letterSpacing: '0.5em',
-            marginTop: '1rem',
-            opacity: 0.8
-          }}
+            className="subtitle-wrapper"
+            style={{
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: '0.65rem',
+                color: 'rgba(255, 255, 255, 0.4)',
+                letterSpacing: '0.6em',
+                marginTop: '2rem',
+                textTransform: 'uppercase',
+                overflow: 'hidden',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '1em'
+            }}
         >
-          CREATIVE DEVELOPER
+            {"Designing Real Experience".split(' ').map((word, i) => (
+                <span key={i} className="subtitle-word inline-block" style={{ willChange: 'transform, opacity' }}>
+                    {word}
+                </span>
+            ))}
         </p>
-      </div>
 
-      <div 
-        ref={percentageRef}
-        style={{
-          position: 'absolute', bottom: '10%', right: '10%',
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: 'clamp(3rem, 8vw, 6rem)',
-          color: 'rgba(255, 255, 255, 0.03)',
-          fontWeight: 900,
-          fontStyle: 'italic'
-        }}
-      >
-        0%
-      </div>
-
-      <div 
-        style={{
-          position: 'absolute', bottom: '2rem', left: '2rem',
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.2)',
-          letterSpacing: '0.2em'
-        }}
-      >
-        © 2026 — DIGITAL ARCHIVE
+        {/* Minimalist Central Counter */}
+        <div style={{ 
+            marginTop: '3.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.8rem',
+            opacity: 0.5
+        }}>
+            <div style={{ width: '30px', height: '1px', background: 'rgba(255,255,255,0.3)' }} />
+            <span style={{ 
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: '0.8rem',
+                color: '#FFFFFF',
+                letterSpacing: '0.3em'
+            }}>
+                {count}%
+            </span>
+        </div>
       </div>
     </div>
   )
 }
-

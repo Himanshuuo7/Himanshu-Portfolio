@@ -13,8 +13,8 @@ export default function SmoothScroll({ children, isLocked }) {
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1,
-      smoothTouch: false,
-      touchMultiplier: 2,
+      smoothTouch: true, // Enabled for "liquid" mobile feel
+      touchMultiplier: 1.5,
       infinite: false,
     })
 

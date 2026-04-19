@@ -30,6 +30,38 @@ export default function Footer() {
   }, [])
 
 
+  const handleCharHover = (e) => {
+    gsap.to(e.target, {
+      y: -15,
+      color: '#0066FF',
+      duration: 0.4,
+      ease: 'power3.out'
+    })
+  }
+
+  const handleCharLeave = (e) => {
+    gsap.to(e.target, {
+      y: 0,
+      color: e.target.classList.contains('text-blue-500') ? '#0066FF' : '#FFFFFF',
+      duration: 0.4,
+      ease: 'power3.out'
+    })
+  }
+
+  const renderChars = (text, customClass = '') => {
+    return text.split('').map((char, i) => (
+      <span
+        key={i}
+        onMouseEnter={handleCharHover}
+        onMouseLeave={handleCharLeave}
+        className={`inline-block transition-colors duration-300 ${customClass}`}
+        style={{ willChange: 'transform, color' }}
+      >
+        {char === ' ' ? '\u00A0' : char}
+      </span>
+    ))
+  }
+
   return (
     <footer 
         ref={containerRef}
@@ -61,11 +93,19 @@ export default function Footer() {
                 color: '#FFFFFF',
                 lineHeight: 0.8,
                 letterSpacing: '-0.02em',
-                marginBottom: isDesktop ? '2rem' : '1.5rem'
+                marginBottom: isDesktop ? '2rem' : '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: isDesktop ? 'flex-start' : 'center'
             }}
           >
-            LET'S MAKE <br />
-            <span style={{ color: '#0066FF' }}>MAGIC</span> HAPPEN.
+            <div className={`flex flex-wrap ${isDesktop ? '' : 'justify-center'}`}>
+                {renderChars("LET'S MAKE")}
+            </div>
+            <div className={`flex flex-wrap ${isDesktop ? '' : 'justify-center'}`}>
+                {renderChars("MAGIC", "text-blue-500")}
+                {renderChars(" HAPPEN.")}
+            </div>
           </h2>
           {isDesktop && (
             <p 

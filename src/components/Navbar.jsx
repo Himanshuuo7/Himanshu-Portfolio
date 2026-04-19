@@ -2,37 +2,73 @@ import { useState, useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Magnetic from './Magnetic'
-import { FiMenu, FiX } from 'react-icons/fi'
 import { FaLinkedinIn, FaGithub, FaInstagram, FaXTwitter } from 'react-icons/fa6'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const LINKS = [
-  { label: 'Home',     href: '#home' },
-  { label: 'About',    href: '#about' },
-  { label: 'Skills',   href: '#skills' },
-  { label: 'Projects', href: '#projects' },
-  { label: 'Contact',  href: '#contact' },
+  { label: 'Home',     href: '#home',     num: '01' },
+  { label: 'About',    href: '#about',    num: '02' },
+  { label: 'Skills',   href: '#skills',   num: '03' },
+  { label: 'Projects', href: '#projects', num: '04' },
+  { label: 'Contact',  href: '#contact',  num: '05' },
 ]
 
-export default function Navbar() {
+const HamburgerIcon = ({ isOpen, onClick }) => {
+  const line1Ref = useRef(null)
+  const line2Ref = useRef(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      gsap.to(line1Ref.current, { y: 4, rotate: 45, duration: 0.5, ease: 'power3.inOut' })
+      gsap.to(line2Ref.current, { y: -4, rotate: -45, duration: 0.5, ease: 'power3.inOut' })
+    } else {
+      gsap.to(line1Ref.current, { y: 0, rotate: 0, duration: 0.5, ease: 'power3.inOut' })
+      gsap.to(line2Ref.current, { y: 0, rotate: 0, duration: 0.5, ease: 'power3.inOut' })
+    }
+  }, [isOpen])
+
+  return (
+    <div 
+      onClick={onClick}
+      className="relative w-10 h-10 flex flex-col justify-center items-center cursor-none group"
+      data-cursor="pointer"
+    >
+      <div 
+        ref={line1Ref} 
+        className="w-8 h-[2px] bg-white mb-[6px] transition-colors group-hover:bg-[#0066FF]" 
+        style={{ transformOrigin: 'center' }}
+      />
+      <div 
+        ref={line2Ref} 
+        className="w-8 h-[2px] bg-white transition-colors group-hover:bg-[#0066FF]" 
+        style={{ transformOrigin: 'center' }}
+      />
+    </div>
+  )
+}
+
+export default function Navbar({ menuOpen, setMenuOpen }) {
   const [active, setActive] = useState('home')
   const [lastScroll, setLastScroll] = useState(0)
   const [visible, setVisible] = useState(true)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   
   const progressRef = useRef(null)
   const menuOverlayRef = useRef(null)
   const menuLinksRef = useRef([])
+  const menuFooterRef = useRef(null)
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScroll = window.scrollY
-      if (currentScroll > lastScroll && currentScroll > 100) {
-        setVisible(false)
-      } else {
-        setVisible(true)
-      }
+      
+      // Update scrolled state for premium floating effect
+      setIsScrolled(currentScroll > 50)
+
+      // Always visible on all devices as requested
+      setVisible(true)
+      
       setLastScroll(currentScroll)
     }
 
@@ -47,42 +83,68 @@ export default function Navbar() {
       }
     })
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id)
-        })
-      },
-      { threshold: 0.5 }
-    )
+    // Active Section Tracking via ScrollTrigger (Superior to IntersectionObserver with Smooth Scroll)
+    const sections = ['home', 'about', 'skills', 'projects', 'contact']
+    
+    sections.forEach((id) => {
+      ScrollTrigger.create({
+        trigger: `#${id}`,
+        start: 'top 40%',
+        end: 'bottom 40%',
+        onToggle: (self) => {
+          if (self.isActive) setActive(id)
+        }
+      })
+    })
 
-    document.querySelectorAll('section[id]').forEach((s) => observer.observe(s))
     window.addEventListener('scroll', handleScroll)
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
-      observer.disconnect()
+      ScrollTrigger.getAll().forEach(t => {
+          if (t.vars.onToggle) t.kill() // Clean up our section triggers
+      })
     }
   }, [lastScroll])
 
-  // Mobile Menu Animation
+  // Mobile Menu Animation Logic
   useEffect(() => {
+    const tl = gsap.timeline()
+    
     if (menuOpen) {
-      gsap.to(menuOverlayRef.current, { 
+      document.body.style.overflow = 'hidden'
+      tl.to(menuOverlayRef.current, { 
         clipPath: 'circle(150% at 100% 0%)', 
-        duration: 1.2, 
-        ease: 'power4.inOut' 
-      })
-      gsap.fromTo(menuLinksRef.current, 
-        { y: 100, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 1, stagger: 0.1, delay: 0.5, ease: 'power4.out' }
-      )
-    } else {
-      gsap.to(menuOverlayRef.current, { 
-        clipPath: 'circle(0% at 100% 0%)', 
         duration: 1, 
         ease: 'power4.inOut' 
       })
+      .fromTo(menuLinksRef.current, 
+        { y: '100%' }, 
+        { y: '0%', duration: 1, stagger: 0.1, ease: 'power4.out' },
+        '-=0.4'
+      )
+      .fromTo(menuFooterRef.current,
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
+        '-=0.6'
+      )
+    } else {
+      // EXIT animation: Immediate link removal as requested
+      tl.to(menuLinksRef.current, { 
+        y: '105%', 
+        duration: 0.3, 
+        stagger: 0, // No stagger for "immediate" look
+        ease: 'power2.in'
+      })
+      .to(menuFooterRef.current, { opacity: 0, y: 10, duration: 0.2 }, '-=0.2')
+      .to(menuOverlayRef.current, { 
+        clipPath: 'circle(0% at 100% 0%)', 
+        duration: 0.6, 
+        ease: 'power4.inOut',
+        onComplete: () => {
+            document.body.style.overflow = 'auto'
+        }
+      }, '-=0.1')
     }
   }, [menuOpen])
 
@@ -90,10 +152,12 @@ export default function Navbar() {
     setMenuOpen(false)
     const el = document.querySelector(href)
     if (el) {
-        window.scrollTo({
-            top: el.offsetTop,
-            behavior: 'smooth'
-        })
+        setTimeout(() => {
+            window.scrollTo({
+                top: el.offsetTop,
+                behavior: 'smooth'
+            })
+        }, 500) // Slightly faster delay now that links exit immediately
     }
   }
 
@@ -102,17 +166,27 @@ export default function Navbar() {
       <header
         style={{
           position: 'fixed',
-          top: 0, left: 0, right: 0,
+          top: 0,
+          left: '50%',
           zIndex: 300,
-          padding: '1.5rem 4vw',
+          padding: isScrolled ? '0.8rem 4vw' : '1.5rem 4vw',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease',
-          transform: visible ? 'translateY(0)' : 'translateY(-100%)',
-          background: lastScroll > 50 || menuOpen ? 'rgba(11, 11, 11, 0.95)' : 'transparent',
-          backdropFilter: lastScroll > 50 || menuOpen ? 'blur(20px)' : 'none',
-          borderBottom: lastScroll > 50 && !menuOpen ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+          background: (isScrolled || menuOpen) ? 'rgba(11, 11, 11, 0.85)' : 'transparent',
+          backdropFilter: (isScrolled || menuOpen) ? 'blur(20px)' : 'none',
+          borderBottom: (isScrolled && !menuOpen) ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+          // Performance and Visibility
+          visibility: visible || menuOpen ? 'visible' : 'hidden',
+          // Premium Floating Pill - Desktop Only
+          marginTop: (isScrolled && !menuOpen && window.innerWidth >= 768) ? '1rem' : '0',
+          borderRadius: (isScrolled && !menuOpen && window.innerWidth >= 768) ? '100px' : '0',
+          boxShadow: (isScrolled && !menuOpen && window.innerWidth >= 768) ? '0 10px 30px rgba(0,0,0,0.5)' : 'none',
+          width: (isScrolled && !menuOpen && window.innerWidth >= 768) ? 'calc(100% - 2rem)' : '100%',
+          transform: (visible || menuOpen) 
+            ? ((isScrolled && !menuOpen && window.innerWidth >= 768) ? 'translate(-50%, 0)' : 'translate(-50%, 0)') 
+            : 'translate(-50%, -100%)'
         }}
       >
         <div 
@@ -123,11 +197,9 @@ export default function Navbar() {
             background: '#0066FF',
             transformOrigin: 'left',
             scaleX: 0,
-            zIndex: 101,
-            opacity: menuOpen ? 0 : 1,
-            visibility: menuOpen ? 'hidden' : 'visible',
-            transition: 'opacity 0.3s ease, visibility 0.3s ease'
+            transition: 'opacity 0.3s'
           }}
+          className={menuOpen ? 'opacity-0' : 'opacity-100'}
         />
 
         <div 
@@ -135,143 +207,90 @@ export default function Navbar() {
             fontFamily: '"Bebas Neue", sans-serif', 
             fontSize: '1.8rem', 
             color: '#FFFFFF',
-            cursor: 'none',
             zIndex: 201,
-            opacity: menuOpen ? 0 : 1,
-            visibility: menuOpen ? 'hidden' : 'visible',
-            transition: 'opacity 0.3s ease, visibility 0.3s ease'
+            transition: 'opacity 0.3s'
           }}
+          className={`cursor-none ${menuOpen ? 'opacity-0' : 'opacity-100'}`}
           data-cursor="pointer"
           onClick={() => scrollTo('#home')}
         >
           H<span style={{ color: '#0066FF' }}>.</span>
         </div>
 
-        {/* Desktop Nav */}
-        <nav style={{ display: 'none', gap: '3rem', alignItems: 'center' }} className="md-flex">
+        {/* Desktop Nav - Removed inline display: none to fix visibility */}
+        <nav className="hidden md:flex items-center gap-12">
           {LINKS.map(({ label, href }) => {
             const isActive = active === href.slice(1)
             return (
               <Magnetic key={label} strength={0.2}>
                 <button
                   onClick={() => scrollTo(href)}
-                  style={{
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    letterSpacing: '0.2em',
-                    color: isActive ? '#0066FF' : 'rgba(255, 255, 255, 0.4)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'none',
-                    transition: 'color 0.3s ease',
-                    position: 'relative',
-                    padding: '10px'
-                  }}
+                  className={`nav-link-hover font-mono text-[0.75rem] uppercase tracking-[0.2em] bg-none border-none cursor-none ${isActive ? 'text-[#0066FF]' : 'text-white/40'}`}
                   data-cursor="pointer"
                 >
-                  {label.toUpperCase()}
+                  {label}
                 </button>
               </Magnetic>
             )
           })}
         </nav>
 
-        {/* Hamburger */}
-        <div 
-          style={{ cursor: 'pointer', zIndex: 301 }} 
-          className="md-hide" 
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <Magnetic strength={0.5}>
-            <div style={{ color: menuOpen ? '#0066FF' : '#FFFFFF', fontSize: '1.8rem', padding: '0.5rem' }}>
-              {menuOpen ? <FiX /> : <FiMenu />}
-            </div>
-          </Magnetic>
+        {/* Hamburger Icon */}
+        <div className="md:hidden z-[301]">
+          <HamburgerIcon isOpen={menuOpen} onClick={() => setMenuOpen(!menuOpen)} />
         </div>
       </header>
 
       {/* Mobile Drawer Overlay */}
       <div 
         ref={menuOverlayRef}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: '#0B0B0B',
-          zIndex: 150,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          padding: '10vw',
-          clipPath: 'circle(0% at 100% 0%)',
-        }}
+        className="fixed inset-0 bg-[#0B0B0B] z-[150] flex flex-col justify-center px-[8vw]"
+        style={{ clipPath: 'circle(0% at 100% 0%)' }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <p style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', color: 'rgba(0, 102, 255, 0.5)', letterSpacing: '0.3em' }}>MENU</p>
-          {LINKS.map(({ label, href }, i) => (
-            <button 
-              key={label}
-              ref={el => menuLinksRef.current[i] = el}
-              onClick={() => scrollTo(href)}
-              style={{
-                fontFamily: '"Bebas Neue", sans-serif',
-                fontSize: 'clamp(3.5rem, 15vw, 6rem)',
-                color: active === href.slice(1) ? '#0066FF' : '#FFFFFF',
-                background: 'none',
-                border: 'none',
-                textAlign: 'left',
-                textDecoration: 'none',
-                lineHeight: 1,
-                cursor: 'none',
-                transition: 'color 0.3s'
-              }}
-              data-cursor="pointer"
-            >
-              {label.toUpperCase()}
-            </button>
+        <div className="flex flex-col gap-4 mt-8">
+          <p className="font-mono text-[0.65rem] text-blue-500/50 uppercase tracking-[0.4em] mb-4">Navigation</p>
+          {LINKS.map(({ label, href, num }, i) => (
+            <div key={label} className="mask-wrap border-b border-white/5 py-2">
+              <button 
+                ref={el => menuLinksRef.current[i] = el}
+                onClick={() => scrollTo(href)}
+                className="mask-content group flex items-baseline gap-6 bg-none border-none text-left cursor-none"
+                data-cursor="pointer"
+              >
+                <span className="font-mono text-[0.8rem] text-white/20 group-hover:text-blue-500 transition-colors uppercase">{num}</span>
+                <span className={`font-['Bebas_Neue'] text-6xl sm:text-7xl lg:text-8xl transition-all duration-500 group-hover:pl-4 ${active === href.slice(1) ? 'text-blue-500' : 'text-white'}`}>
+                  {label.toUpperCase()}
+                </span>
+              </button>
+            </div>
           ))}
         </div>
 
-        <div style={{ marginTop: 'auto', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-            {[
-                { icon: <FaLinkedinIn />, href: 'https://www.linkedin.com/in/himanshu-sonkusre' },
-                { icon: <FaGithub />, href: 'https://github.com/Himanshuuo7' },
-                { icon: <FaXTwitter />, href: 'https://x.com/himmu_o7' },
-                { icon: <FaInstagram />, href: 'https://www.instagram.com/_himen_lyy/' }
-            ].map((social, idx) => (
-                <Magnetic key={idx} strength={0.2}>
-                    <a 
-                        href={social.href} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ 
-                            fontSize: '1.2rem', 
-                            color: 'rgba(255, 255, 255, 0.4)', 
-                            textDecoration: 'none',
-                            transition: 'color 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.color = '#0066FF'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.4)'}
-                    >
-                        {social.icon}
-                    </a>
-                </Magnetic>
-            ))}
+        <div ref={menuFooterRef} className="mt-16 flex flex-col gap-6">
+          <div className="h-[1px] w-full bg-white/5" />
+          <div className="flex justify-between items-center flex-wrap gap-6">
+            <div className="flex gap-6">
+                {[
+                    { icon: <FaLinkedinIn />, href: 'https://www.linkedin.com/in/himanshu-sonkusre' },
+                    { icon: <FaGithub />, href: 'https://github.com/Himanshuuo7' },
+                    { icon: <FaXTwitter />, href: 'https://x.com/himmu_o7' },
+                    { icon: <FaInstagram />, href: 'https://www.instagram.com/_himen_lyy/' }
+                ].map((social, idx) => (
+                   <a 
+                      key={idx}
+                      href={social.href} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xl text-white/40 hover:text-blue-500 transition-all transform hover:scale-110"
+                   >
+                       {social.icon}
+                   </a>
+                ))}
+            </div>
+            <p className="font-mono text-[0.6rem] text-white/20 uppercase tracking-[0.2em]">© 2024 Himanshu S.</p>
+          </div>
         </div>
       </div>
-
-      <style>{`
-        @media (min-width: 768px) {
-            .md-flex { display: flex !important; }
-            .md-hide { display: none !important; }
-        }
-        @media (max-width: 767px) {
-            .md-hide { display: block !important; }
-        }
-      `}</style>
     </>
   )
 }

@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 export default function App() {
   const [loading, setLoading] = useState(true)
+  const [isNavOpen, setIsNavOpen] = useState(false)
 
   useEffect(() => {
     // Fallsback if loader fails
@@ -21,17 +22,17 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (loading) {
+    if (loading || isNavOpen) {
       document.documentElement.style.overflow = 'hidden'
       document.body.style.overflow = 'hidden'
     } else {
       document.documentElement.style.overflow = ''
       document.body.style.overflow = ''
     }
-  }, [loading])
+  }, [loading, isNavOpen])
 
   return (
-    <SmoothScroll isLocked={loading}>
+    <SmoothScroll isLocked={loading || isNavOpen}>
       <div className="noise-overlay" />
       
       <AnimatePresence mode="wait">
@@ -45,7 +46,7 @@ export default function App() {
         animate={{ opacity: loading ? 0 : 1 }}
         transition={{ duration: 1.5, ease: 'easeInOut' }}
       >
-        <Navbar />
+        <Navbar menuOpen={isNavOpen} setMenuOpen={setIsNavOpen} />
         <main>
           <Home />
           <About />
